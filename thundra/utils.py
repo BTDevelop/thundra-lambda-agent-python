@@ -1,7 +1,7 @@
 import os
 import sys
 from thundra import constants
-
+from inspect import getmembers, isfunction
 
 def get_configuration(key, default=None):
     return os.environ.get(key, default=default)
@@ -135,25 +135,31 @@ def process_trace_def_env_var(value):
     path = value[0].split('.')
     trace_args = {}
 
-    function_prefix = path[-1][:-1] if path[-1] != '*' else ''
+    function_prefix = path[-1][:-1] if path[-1] != '*' else '*'
     module_path = ".".join(path[:-1])
-    trace_string = value[1].strip(']').split(',')
-    for arg  in trace_string:
-        arg = arg.split('=')
-        try:
-            trace_args[arg[0]] = arg[1]
-        except:
-            pass
+
+    if len(value) > 1 :
+        trace_string = value[1].strip(']').split(',')
+        for arg in trace_string:
+            arg = arg.split('=')
+            try:
+                trace_args[arg[0].strip()] = arg[1].strip()
+            except:
+                pass
+    else:
+        trace_args["trace_args"] = 'False'
+        trace_args["trace_return_value"] = 'False'
+        trace_args["trace_error"] = 'False'
 
     return module_path, function_prefix, trace_args
 
 
 def get_allowed_functions(module):
-    allowed_functions = []
-    for prop in vars(module):
-        #TO DO: differentiate functions
-        allowed_functions.append(str(prop))
-    return allowed_functions
+    functions_list = []
+    for o in getmembers(module):
+        if ( isfunction(o[1])):
+            functions_list.append(str(o[1].__name__))
+    return functions_list
 
 
 def get_aws_region_from_arn(func_arn):
