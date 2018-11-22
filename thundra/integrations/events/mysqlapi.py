@@ -31,7 +31,7 @@ class DBIntegration(BaseIntegration):
         span.domain_name = constants.DomainNames['DB']
         span.class_name = constants.ClassNames['RDB']
 
-        query = str(cursor.__self__._executed)[1:]
+        query = str(cursor.__self__._executed)[2:-1].lower()
         operation = query.split()[0].lower().strip("\"")
         tableName =  self._extract_table_name(query, operation)
 
