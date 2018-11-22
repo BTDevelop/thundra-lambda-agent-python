@@ -31,10 +31,9 @@ class DBIntegration(BaseIntegration):
         span.domain_name = constants.DomainNames['DB']
         span.class_name = constants.ClassNames['RDB']
 
-        query = str(_args).strip('()').rstrip(",")
+        query = str(cursor.__self__._executed)[1:]
         operation = query.split()[0].lower().strip("\"")
         tableName =  self._extract_table_name(query, operation)
-
 
         tags = {
             constants.SpanTags['SPAN_TYPE']: constants.SpanTypes['RDB'],
@@ -65,7 +64,6 @@ class DBIntegration(BaseIntegration):
             query_words = query.lower().split()
             if keyword in query_words:
                 return query.split()[query_words.index(keyword) + 1]
-
         return ''
 
 
