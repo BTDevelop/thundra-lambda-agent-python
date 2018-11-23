@@ -43,22 +43,16 @@ class DBIntegration(BaseIntegration):
 
 
         dsn = parse_dsn(connection.dsn)
-        print("dsn : " + str(dsn))
         query = str(cursor.__self__.query)[2:-1].lower()
-        print(query)
         operation = query.split()[0].lower().strip("\"")
         tableName =  self._extract_table_name(query, operation)
-
-        print(operation)
-        print(query)
-        print(dsn)
 
         tags = {
             constants.SpanTags['SPAN_TYPE']: constants.SpanTypes['RDB'],
             constants.SpanTags['OPERATION_TYPE']: DBIntegration._OPERATION_TO_TYPE[operation],
             constants.SpanTags['DB_INSTANCE']: dsn['dbname'],
             constants.SpanTags['DB_URL']: dsn['host'],
-            constants.SpanTags['DB_TYPE']: "postgre",
+            constants.SpanTags['DB_TYPE']: "postgresql",
             constants.SpanTags['DB_STATEMENT']: query,
             constants.SpanTags['DB_STATEMENT_TYPE']: operation,
             constants.SpanTags['TRIGGER_DOMAIN_NAME']: "AWS-Lambda",
