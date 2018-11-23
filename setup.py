@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-
 setup(name='thundra',
       version='2.0.2',
       description='Thundra Python agent',
@@ -8,6 +7,7 @@ setup(name='thundra',
       author_email='python@thundra.io',
       python_requires='>=3',
       packages=find_packages(exclude=('tests', 'tests.*',)),
-      install_requires=['requests>=2.16.0', 'opentracing>=2.0', 'wrapt>=1.10.11'],
+      install_requires=['requests>=2.16.0', 'opentracing>=2.0', 'wrapt>=1.10.11',],
+      tests_require = [ 'mysql-connector>=2.1.6', 'psycopg2>=2.7.6.1'],
       zip_safe=True,
       )
