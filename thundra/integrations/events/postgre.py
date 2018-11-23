@@ -5,6 +5,16 @@ import string
 import thundra.constants as constants
 from thundra.integrations.base_integration import BaseIntegration
 
+try:
+    from psycopg2.extensions import parse_dsn
+
+except ImportError:
+    def parse_dsn(dsn):
+        return dict(
+            attribute.split("=") for attribute in dsn.split()
+            if "=" in attribute
+        )
+
 class DBIntegration(BaseIntegration):
 
     _OPERATION_TO_TABLE_NAME_KEYWORD = {
@@ -24,23 +34,31 @@ class DBIntegration(BaseIntegration):
     }
 
 
-    def __init__(self, scope, connection, cursor, _args, _kwargs, start_time, exception):
+    def __init__(self, scope, cursor, connection,_args, _kwargs, start_time, exception):
 
         super(DBIntegration, self).__init__()
         span = scope.span
         span.domain_name = constants.DomainNames['DB']
         span.class_name = constants.ClassNames['RDB']
 
-        query = str(cursor.__self__._executed)[2:-1].lower()
+
+        dsn = parse_dsn(connection.dsn)
+        print("dsn : " + str(dsn))
+        query = str(cursor.__self__.query)[2:-1].lower()
+        print(query)
         operation = query.split()[0].lower().strip("\"")
         tableName =  self._extract_table_name(query, operation)
+
+        print(operation)
+        print(query)
+        print(dsn)
 
         tags = {
             constants.SpanTags['SPAN_TYPE']: constants.SpanTypes['RDB'],
             constants.SpanTags['OPERATION_TYPE']: DBIntegration._OPERATION_TO_TYPE[operation],
-            constants.SpanTags['DB_INSTANCE']: connection._database,
-            constants.SpanTags['DB_URL']: connection._host,
-            constants.SpanTags['DB_TYPE']: "mysql",
+            constants.SpanTags['DB_INSTANCE']: dsn['dbname'],
+            constants.SpanTags['DB_URL']: dsn['host'],
+            constants.SpanTags['DB_TYPE']: "postgre",
             constants.SpanTags['DB_STATEMENT']: query,
             constants.SpanTags['DB_STATEMENT_TYPE']: operation,
             constants.SpanTags['TRIGGER_DOMAIN_NAME']: "AWS-Lambda",
@@ -70,12 +88,11 @@ class DBIntegration(BaseIntegration):
 class DBAPIEventListener(object):
 
     @staticmethod
-    # pylint: disable=W0613
     def create_event(scope, cursor_wrapper, instance, args, kwargs, response, exception):
         DBIntegration(
             scope,
-            instance,
             cursor_wrapper,
+            instance,
             args,
             kwargs,
             response,

@@ -1,7 +1,9 @@
 from __future__ import absolute_import
+
+import psycopg2
 import wrapt
 from thundra.integrations.modules.generic_wrapper import wrapper
-from thundra.integrations.events.mysql import DBAPIEventListener
+from thundra.integrations.events.postgre import DBAPIEventListener
 
 class CursorWrapper(wrapt.ObjectProxy):
 
@@ -41,7 +43,6 @@ def _connect_wrapper(wrapped, instance, args, kwargs):
 
 def patch():
     wrapt.wrap_function_wrapper(
-        'mysql.connector',
+        psycopg2,
         'connect',
-        _connect_wrapper
-    )
+        _connect_wrapper)
