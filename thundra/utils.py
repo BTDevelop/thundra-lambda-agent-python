@@ -1,5 +1,5 @@
 import os
-import sys
+import sys, inspect
 from urllib.parse import urlparse
 from thundra import constants
 from inspect import getmembers, isfunction
@@ -155,13 +155,27 @@ def process_trace_def_env_var(value):
     return module_path, function_prefix, trace_args
 
 
+def classesinmodule(module):
+    md = module.__dict__
+    return [
+        md[c] for c in md if (
+            isinstance(md[c], type) and md[c].__module__ == module.__name__
+        )
+    ]
+
 def get_allowed_functions(module):
     functions_list = []
-    for o in getmembers(module):
-        if ( isfunction(o[1])):
-            functions_list.append(str(o[1].__name__))
-    return functions_list
 
+    for clazz in classesinmodule(module):
+        for o in getmembers(clazz):
+            if (inspect.isfunction(o[1])):
+                functions_list.append({"type" : "class", "className": clazz.__name__, "functionName" : clazz.__name__ + "." + str(o[1].__name__)})
+
+    for o in getmembers(module):
+        if ( inspect.isfunction(o[1])):
+            functions_list.append({"type": "function", "functionName": str(o[1].__name__)})
+
+    return functions_list
 
 def get_aws_region_from_arn(func_arn):
     return func_arn.split(':')[3] if len(func_arn.split(':')) >= 3 else ""

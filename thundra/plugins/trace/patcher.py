@@ -4,7 +4,7 @@ from thundra import constants
 import thundra.utils as utils
 from thundra.plugins.trace.traceable import Traceable
 
-import sys
+import sys, inspect
 from importlib.machinery import PathFinder, ModuleSpec, SourceFileLoader
 
 
@@ -34,13 +34,13 @@ class ImportPatcher(utils.Singleton):
         return modules
 
     def get_module_function_prefix(self, module_name):
-        try: 
+        try:
             return self.modules_map[module_name][0]
         except:
             return None
-    
+
     def get_trace_arguments(self, module_name):
-        try: 
+        try:
             return self.modules_map[module_name][1]
         except:
             return None
@@ -98,7 +98,7 @@ class AnotherFinder(PathFinder):
 
 # Loading the module in a load time
 class ThundraLoader(SourceFileLoader):
-  
+
     def exec_module(self, module):
         super().exec_module(module)
         import_patcher = ImportPatcher()
@@ -108,7 +108,7 @@ class ThundraLoader(SourceFileLoader):
         try:
             trace_args = utils.str2bool(trace_args_list[constants.TRACE_ARGS])
         except:
-            trace_args = False  
+            trace_args = False
 
         try:
             trace_return_value = utils.str2bool(trace_args_list[constants.TRACE_RETURN_VALUE])
@@ -124,16 +124,28 @@ class ThundraLoader(SourceFileLoader):
 
         if function_prefix != '':
             for function in allowed_functions:
-                if (function_prefix == "*") or (function_prefix in function):
-                    setattr(module, function,
-                            Traceable(trace_args=trace_args,
-                                      trace_return_value=trace_return_value,
-                                      trace_error=trace_error)(getattr(module, function)))
+                if (function_prefix == "*") or (function_prefix in function['functionName']):
+                    funcName = function['functionName']
+                    if function['type'] == "class":
+                        mod = __import__(module.__name__, fromlist=[funcName])
+                        klass = getattr(mod, function['className'])
+                        for f in utils.get_allowed_functions(klass):
+                            setattr(klass, f['functionName'],
+                                    Traceable(trace_args=trace_args,
+                                              trace_return_value=trace_return_value,
+                                              trace_error=trace_error)(getattr(klass, f['functionName'])))
+                    else:
+                        setattr(module, funcName,
+                                Traceable(trace_args=trace_args,
+                                          trace_return_value=trace_return_value,
+                                          trace_error=trace_error)(getattr(module, funcName)))
+
         else:
             for function in allowed_functions:
-                setattr(module, function,
+                funcName = function['functionName']
+                setattr(module, funcName,
                         Traceable(trace_args=trace_args,
                                   trace_return_value=trace_return_value,
-                                  trace_error=trace_error)(getattr(module, function)))
-        
+                                  trace_error=trace_error)(getattr(module, funcName)))
+
         return module
