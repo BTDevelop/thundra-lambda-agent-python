@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import traceback
 import thundra.constants as constants
 from thundra.integrations.base_integ import BaseIntegration
+from thundra.integrations.rdb_base import RdbBaseIntegration
 
 try:
     from psycopg2.extensions import parse_dsn
@@ -13,8 +14,7 @@ except ImportError:
             if "=" in attribute
         )
 
-
-class PostgreIntegration(BaseIntegration):
+class PostgreIntegration(BaseIntegration, RdbBaseIntegration):
 
     def __init__(self):
         pass
@@ -36,7 +36,7 @@ class PostgreIntegration(BaseIntegration):
             constants.SpanTags['SPAN_TYPE']: constants.SpanTypes['RDB'],
             constants.SpanTags['OPERATION_TYPE']: PostgreIntegration._OPERATION_TO_TYPE[operation],
             constants.SpanTags['DB_INSTANCE']: dsn['dbname'],
-            constants.SpanTags['DB_URL']: dsn['host'],
+            constants.SpanTags['DB_HOST']: dsn['host'],
             constants.SpanTags['DB_TYPE']: "postgresql",
             constants.SpanTags['DB_STATEMENT']: query,
             constants.SpanTags['DB_STATEMENT_TYPE']: operation.upper(),

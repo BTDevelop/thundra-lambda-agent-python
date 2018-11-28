@@ -1,7 +1,5 @@
-from thundra.integrations.base_integ import BaseIntegration
 
-
-class RdbBaseIntegration(BaseIntegration):
+class RdbBaseIntegration():
     _OPERATION_TO_TABLE_NAME_KEYWORD = {
         'select': 'from',
         'insert': 'into',

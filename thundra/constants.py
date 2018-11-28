@@ -119,7 +119,7 @@ SpanTags = {
     'OPERATION_TYPE': 'operation.type',
     'DB_INSTANCE': 'db.instance',
     'DB_TYPE': 'db.type',
-    'DB_URL': 'db.url',
+    'DB_HOST': 'db.host',
     'TRIGGER_DOMAIN_NAME': 'trigger.domainName',
     'TRIGGER_CLASS_NAME': 'trigger.className',
     'DB_STATEMENT': 'db.statement',
