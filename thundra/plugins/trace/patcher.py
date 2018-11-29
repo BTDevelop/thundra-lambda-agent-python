@@ -14,7 +14,8 @@ class ImportPatcher(utils.Singleton):
         self.modules_map = self.__process_env_var_modules_to_instrument()
 
         for module_path in self.modules_map.keys():
-            sys.meta_path.insert(0, AnotherFinder(module_path))
+            sys.meta_path.insert(0, YetAnotherFinder(module_path))
+            # sys.meta_path.insert(0, AnotherFinder(module_path))
             # sys.meta_path.insert(0, ThundraFinder(module_path))
 
     @staticmethod
@@ -56,6 +57,28 @@ class ThundraFinder(PathFinder):
             spec = super().find_spec(fullname, path, target)
             loader = ThundraLoader(fullname, spec.origin)
             return ModuleSpec(fullname, loader)
+
+class YetAnotherFinder(PathFinder):
+    def __init__(self, module_name):
+        self.module_name = module_name
+
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname == self.module_name:
+            print("fullname : " + fullname)
+            path = "/var/task"
+            if "." in fullname:
+                path = path + "/" + fullname.split(".")[0]
+                filePath = path + "/" + fullname.split(".")[1] + ".py"
+            else:
+                filePath = path + "/" + fullname
+
+            print(filePath)
+            if os.path.exists(filePath):
+                loader = ThundraLoader(fullname, filePath)
+                mod = ModuleSpec(fullname, loader)
+                return mod
+            else:
+                return None
 
 
 class AnotherFinder(PathFinder):
