@@ -1,49 +1,43 @@
-"""
-Base Event class
-"""
-
-from __future__ import absolute_import
+import abc
 import time
-from .common import ErrorCode
+import traceback
+from thundra.opentracing.tracer import ThundraTracer
 
 
-class BaseIntegration(object):
-    """
-    Serves as a base class for all integrations
-    """
+class BaseIntegration(abc.ABC):
 
-    CLASS_TYPE = 'base'
+    CLASS_TYPE = "base"
 
-    def __init__(self):
-        self.event_id = ''
-        self.error_code = ErrorCode.OK
-        self.exception = {}
+    def create_span(self, wrapped, instance, args, kwargs):
+        tracer = ThundraTracer.get_instance()
+        response = None
+        exception = None
 
-        self.resource = {
-            'type': self.CLASS_TYPE,
-            'name': '',
-            'operation': '',
-            'metadata': {},
-        }
+        with tracer.start_active_span(operation_name=self.get_operation_name(), finish_on_close=True) as scope:
+            try:
+                response = wrapped(*args, **kwargs)
+                return response
+            except Exception as operation_exception:
+                exception = operation_exception
+                raise
+            finally:
+                try:
+                    self.inject_span_info(scope, wrapped, instance, args, kwargs, response, exception)
+                except Exception as instrumentation_exception:
+                    error = {
+                        'type': str(type(instrumentation_exception)),
+                        'message': str(instrumentation_exception),
+                        'traceback': traceback.format_exc(),
+                        'time': time.time()
+                    }
+                    traceback.print_exc()
+                    scope.span.set_tag('instrumentation_error', error)
 
-    def set_error(self):
-        """
-        Sets general error.
-        :return: None
-        """
+    @abc.abstractmethod
+    def get_operation_name(self):
+        raise Exception("should be implemented")
 
-        self.error_code = ErrorCode.ERROR
 
-    def set_exception(self, exception, traceback_data, scope):
-        """
-        Sets exception data on event.
-        :param exception: Exception object
-        :param traceback_data: traceback string
-        :return: None
-        """
-
-        self.error_code = ErrorCode.EXCEPTION
-        self.exception['type'] = type(exception).__name__
-        self.exception['message'] = str(exception)
-        self.exception['traceback'] = traceback_data
-        self.exception['time'] = time.time()
+    @abc.abstractmethod
+    def inject_span_info(self, scope, wrapped, instance, args, kwargs, response, exception):
+        raise Exception("should be implemented")
