@@ -47,5 +47,6 @@ class Reporter():
             request_url = base_url + '/monitoring-data'
 
         response = self.session.post(request_url, headers=headers, data=json.dumps(self.reports))
+        print(response)
         self.reports.clear()
         return response

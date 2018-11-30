@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-import psycopg2
 import wrapt
 from thundra.integrations.modules.generic_wrapper import wrapper
 from thundra.integrations.events.postgre import DBAPIEventListener
@@ -43,6 +42,6 @@ def _connect_wrapper(wrapped, instance, args, kwargs):
 
 def patch():
     wrapt.wrap_function_wrapper(
-        psycopg2,
+        'psycopg2',
         'connect',
         _connect_wrapper)

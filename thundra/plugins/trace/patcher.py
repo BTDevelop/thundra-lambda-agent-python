@@ -64,7 +64,6 @@ class YetAnotherFinder(PathFinder):
 
     def find_spec(self, fullname, path=None, target=None):
         if fullname == self.module_name:
-            print("fullname : " + fullname)
             path = "/var/task"
             if "." in fullname:
                 path = path + "/" + fullname.split(".")[0]
@@ -72,7 +71,6 @@ class YetAnotherFinder(PathFinder):
             else:
                 filePath = path + "/" + fullname
 
-            print(filePath)
             if os.path.exists(filePath):
                 loader = ThundraLoader(fullname, filePath)
                 mod = ModuleSpec(fullname, loader)

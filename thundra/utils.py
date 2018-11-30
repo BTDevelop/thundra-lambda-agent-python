@@ -168,11 +168,11 @@ def get_allowed_functions(module):
 
     for clazz in classesinmodule(module):
         for o in getmembers(clazz):
-            if (inspect.isfunction(o[1])):
+            if inspect.isfunction(o[1]) and ("__init__" not in str(o[1].__name__)):
                 functions_list.append({"type" : "class", "className": clazz.__name__, "functionName" : clazz.__name__ + "." + str(o[1].__name__)})
 
     for o in getmembers(module):
-        if ( inspect.isfunction(o[1])):
+        if ( inspect.isfunction(o[1])) and ("__init__" not in str(o[1].__name__)):
             functions_list.append({"type": "function", "functionName": str(o[1].__name__)})
 
     return functions_list
