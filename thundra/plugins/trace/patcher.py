@@ -1,11 +1,10 @@
 import os
-
-from thundra import constants
-import thundra.utils as utils
-from thundra.plugins.trace.traceable import Traceable
-
-import sys, inspect
+import sys
 from importlib.machinery import PathFinder, ModuleSpec, SourceFileLoader
+
+import thundra.utils as utils
+from thundra import constants
+from thundra.plugins.trace.traceable import Traceable
 
 
 class ImportPatcher(utils.Singleton):
@@ -72,9 +71,10 @@ class YetAnotherFinder(PathFinder):
                 filePath = path + "/" + fullname
 
             if os.path.exists(filePath):
-                loader = ThundraLoader(fullname, filePath)
-                mod = ModuleSpec(fullname, loader)
-                return mod
+                if (filePath not in sys.path):
+                    loader = ThundraLoader(fullname, filePath)
+                    mod = ModuleSpec(fullname, loader)
+                    return mod
             else:
                 return None
 
@@ -85,9 +85,9 @@ class AnotherFinder(PathFinder):
         self.module_name = module_name
 
     def find_spec(self, fullname, path=None, target=None):
-        if ( fullname == self.module_name ):
+        if (fullname == self.module_name):
             if path is None or path == "":
-                path = [os.getcwd()] # top level import --
+                path = [os.getcwd()]  # top level import --
 
             if "." in fullname:
                 *parents, name = fullname.split(".")
@@ -114,11 +114,13 @@ class AnotherFinder(PathFinder):
                         return moduleSpec
                     else:
                         return None
-        return None # we don't know how to import this
+        return None  # we don't know how to import this
 
 
 # Loading the module in a load time
 class ThundraLoader(SourceFileLoader):
+    def __init__(self, fullname, path):
+        super().__init__(fullname, path)
 
     def exec_module(self, module):
         super().exec_module(module)
@@ -137,7 +139,7 @@ class ThundraLoader(SourceFileLoader):
             trace_return_value = False
 
         try:
-            trace_error= utils.str2bool(trace_args_list[constants.TRACE_ERROR])
+            trace_error = utils.str2bool(trace_args_list[constants.TRACE_ERROR])
         except:
             trace_error = True
 
@@ -150,11 +152,10 @@ class ThundraLoader(SourceFileLoader):
                     if function['type'] == "class":
                         mod = __import__(module.__name__, fromlist=[funcName])
                         klass = getattr(mod, function['className'])
-                        for f in utils.get_allowed_functions(klass):
-                            setattr(klass, f['functionName'],
-                                    Traceable(trace_args=trace_args,
-                                              trace_return_value=trace_return_value,
-                                              trace_error=trace_error)(getattr(klass, f['functionName'])))
+                        setattr(klass, funcName,
+                                Traceable(trace_args=trace_args,
+                                          trace_return_value=trace_return_value,
+                                          trace_error=trace_error)(getattr(klass, funcName)))
                     else:
                         setattr(module, funcName,
                                 Traceable(trace_args=trace_args,
