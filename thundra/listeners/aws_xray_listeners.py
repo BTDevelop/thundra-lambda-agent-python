@@ -31,10 +31,7 @@ class AWSXrayListener(ThundraSpanListener):
             self.add_metadata(span)
             self.add_annotation(span)
             self.add_error(span)
-            if utils.get_configuration(constants.THUNDRA_APPLICATION_STAGE) == 'dev':
-                dict_recorder = {'xray': vars(xray_recorder.current_subsegment()), 'span': vars(span)}
-                AWSXrayListener._tracer.test_xray_traces.append(dict_recorder)
-            xray_recorder.end_subsegment()
+            return xray_recorder.end_subsegment()
 
     def put_annotation_if_available(self, key, dictionary, dict_key, document):
         if dict_key in dictionary:
